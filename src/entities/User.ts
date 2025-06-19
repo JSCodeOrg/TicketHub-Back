@@ -1,4 +1,5 @@
-import { Entity, Column, OneToOne, JoinColumn, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, OneToOne, JoinColumn, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { UserPerRoles } from './users_per_roles';
 
 @Entity('Usuarios')
 export class User {
@@ -6,10 +7,28 @@ export class User {
     id?: number;
 
     @Column()
-    username?: string;
+    email?: string;
 
     @Column()
     password?: string;
+
+    @Column()
+    nombre?: string;
+
+    @Column()
+    apellido?: string;
+
+    @Column()
+    documento?: number;
+
+    @Column()
+    foto?: string;
+
+    @OneToMany(() => UserPerRoles, userPerRoles => userPerRoles.user)
+    userPerRoles?: UserPerRoles[];
+
+
+    
 }
 
 
