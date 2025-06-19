@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { UserService } from "../services/UserService";
 
-class UserController {
+export class UserController {
     userService: UserService;
 
     constructor(userService: UserService) {
@@ -15,6 +15,7 @@ class UserController {
             res.status(400).json({ message: 'Email y contraseña requeridos.' });
             return;
         }
+
         try {
             const result = await this.userService.loginUser(email, password)
             if (result.error) {
@@ -28,6 +29,28 @@ class UserController {
         } catch (error) {
             console.error('Error en el controlador de login:', error);
             res.status(500).json({ message: 'Error al intentar hacer login, por favor intenta más tarde' });
+        }
+    }
+
+    public async register(req: Request, res: Response): Promise<void> {
+        const { email, password, nombre, apellido, documento, foto } = req.body;
+
+        if (!email || !password || !nombre || !apellido || !documento) {
+            res.status(400).json({ message: 'Faltan campos requeridos.' });
+            return;
+        }
+
+        try {
+            const result = await this.userService.registerUser({ email, password, nombre, apellido, documento, foto });
+
+            if (result.error) {
+                res.status(409).json({ message: result.error });
+            } else {
+                res.status(201).json({ message: 'Usuario registrado correctamente.', user: result.user });
+            }
+        } catch (error) {
+            console.error('Error en el controlador de registro:', error);
+            res.status(500).json({ message: 'Error interno al registrar usuario.' });
         }
     }
 }

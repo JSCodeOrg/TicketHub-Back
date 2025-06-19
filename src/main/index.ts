@@ -21,7 +21,7 @@ const connect = async () => {
 }
 
 connect().then(() => {
-    app.use('/', routes); 
+    app.use('/tickethub', routes); 
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
 }).catch(error => {

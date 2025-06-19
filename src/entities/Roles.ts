@@ -8,7 +8,7 @@ export class Roles {
     id?: number;
 
     @Column()
-    role?: string;
+    nombre?: string;
 
     @OneToMany(() => UserPerRoles, userPerRoles => userPerRoles.role)
     userPerRoles?: UserPerRoles[];
