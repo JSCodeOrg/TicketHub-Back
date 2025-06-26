@@ -112,4 +112,69 @@ export class UserController {
             });
         }
     }
+
+    public async updateProfile(req: Request, res: Response): Promise<void> {
+        const { id } = req.params;
+        const { nombre, apellido, documento, password } = req.body;
+
+        try {
+            const result = await this.userService.updateUserProfile(
+                parseInt(id),
+                { nombre, apellido, documento, password }
+            );
+
+            if (result.error) {
+                res.status(400).json({ 
+                    success: false,
+                    message: result.error 
+                });
+            } else {
+                res.status(200).json({ 
+                    success: true,
+                    message: 'Perfil actualizado correctamente.',
+                    user: result.user 
+                });
+            }
+        } catch (error) {
+            console.error('Error al actualizar perfil:', error);
+            res.status(500).json({ 
+                success: false,
+                message: 'Error interno al actualizar perfil.' 
+            });
+        }
+    }
+
+
+    public async getUserProfile(req: Request, res: Response): Promise<void> {
+    const { id } = req.params;
+
+    try {
+        const user = await this.userService.getUserById(parseInt(id));
+
+        if (!user) {
+            res.status(404).json({ 
+                success: false,
+                message: 'Usuario no encontrado' 
+            });
+            return;
+        }
+
+        res.status(200).json({ 
+            success: true,
+            user: {
+                id: user.id,
+                nombre: user.nombre,
+                apellido: user.apellido,
+                email: user.email,
+                documento: user.documento
+            }
+        });
+    } catch (error) {
+        console.error('Error al obtener perfil:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Error interno al obtener perfil' 
+        });
+    }
+}
 }

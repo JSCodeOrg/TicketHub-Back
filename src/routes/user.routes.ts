@@ -18,5 +18,7 @@ const userController = new UserController(userService);
 router.post('/auth/login', (req, res) => userController.login(req, res));
 router.post('/auth/register', (req, res) => userController.register(req, res));
 router.post('/auth/verify', (req, res) => userController.verify(req, res));
+router.put('/auth/updateProfile', (req, res) => userController.updateProfile(req, res));
+router.get('/auth/user/:id', (req, res) => userController.getUserProfile(req, res));
 
 export default router;

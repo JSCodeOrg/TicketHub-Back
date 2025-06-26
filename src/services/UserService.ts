@@ -141,4 +141,54 @@ export class UserService {
             return { success: false, error: 'Error al verificar usuario.' };
         }
     }
+
+
+
+
+    public async updateUserProfile(
+        userId: number, 
+        updateData: { 
+            nombre?: string; 
+            apellido?: string; 
+            documento?: number; 
+            password?: string 
+        }
+    ): Promise<{ user?: User; error?: string }> {
+        try {
+            const user = await this.userRepository.findOne({ where: { id: userId } });
+            
+            if (!user) {
+                return { error: 'Usuario no encontrado.' };
+            }
+
+            if (updateData.nombre) user.nombre = updateData.nombre;
+            if (updateData.apellido) user.apellido = updateData.apellido;
+            if (updateData.documento) user.documento = updateData.documento;
+
+
+            if (updateData.password) {
+                user.password = await bcrypt.hash(updateData.password, 10);
+            }
+
+            const updatedUser = await this.userRepository.save(user);
+            
+            return { user: updatedUser };
+        } catch (error) {
+            console.error('Error al actualizar perfil:', error);
+            return { error: 'Error al actualizar perfil.' };
+        }
+    }
+
+
+    public async getUserById(userId: number): Promise<User | null> {
+    try {
+        return await this.userRepository.findOne({ 
+            where: { id: userId },
+            select: ['id', 'nombre', 'apellido', 'email', 'documento']
+        });
+    } catch (error) {
+        console.error('Error al obtener usuario:', error);
+        return null;
+    }
+}
 }
