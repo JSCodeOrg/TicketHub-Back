@@ -15,7 +15,8 @@ const userPerRolesRepository = AppDataSource.getRepository(UserPerRoles);
 const userService = new UserService(userRepository, rolesRepository, userPerRolesRepository);
 const userController = new UserController(userService);
 
-router.post('/login', (req, res) => userController.login(req, res));
-router.post('/register', (req, res) => userController.register(req, res));
+router.post('/auth/login', (req, res) => userController.login(req, res));
+router.post('/auth/register', (req, res) => userController.register(req, res));
+router.post('/auth/verify', (req, res) => userController.verify(req, res));
 
 export default router;

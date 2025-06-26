@@ -21,12 +21,17 @@ export class User {
     @Column()
     documento?: number;
 
-    @Column()
-    foto?: string;
+    //@Column()
+    //foto?: string;
 
     @OneToMany(() => UserPerRoles, userPerRoles => userPerRoles.user)
     userPerRoles?: UserPerRoles[];
 
+    @Column({ default: false })
+    isVerified?: boolean;
+
+    @Column({ nullable: true })
+    verificationCode?: string;
 
     
 }

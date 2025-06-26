@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { Roles } from "../entities/Roles";
 import { UserPerRoles } from "../entities/users_per_roles";
+import { emailService } from '../services/email.service';
 
 
 export class UserService {
@@ -19,29 +20,51 @@ export class UserService {
     }
 
 
-    public async loginUser(email: string, password: string): Promise<{ token?: string; error?: string }> {
-
+    public async loginUser(email: string, password: string): Promise<{ 
+        token?: string; 
+        user?: { id: number; email: string }; 
+        error?: string 
+    }> {
         try {
-            const user = await this.userRepository.findOne({ where: { email } });
+            const user = await this.userRepository.findOne({ 
+                where: { email },
+                select: ['id', 'email', 'password', 'isVerified']
+            });
 
-            if (!user || !user.password) {
-                return { error: "Usuario no enconrado" };
+            if (!user) {
+                return { error: "Usuario no encontrado" };
             }
 
-            const encrypted_password = await bcrypt.compare(password, user.password);
+            if (!user.isVerified) {
+                return { error: "Por favor verifica tu cuenta antes de iniciar sesión" };
+            }
 
-            if (!encrypted_password) {
+            if (!user.password) {
+                return { error: "Credenciales inválidas" };
+            }
+
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+            if (!isPasswordValid) {
                 return { error: "Usuario o contraseña incorrectos" };
             }
 
-            const token = jwt.sign({ id: user.id }, "CLAVESECRETA123456@$PEMI", { expiresIn: "12h" })
+            if (!user.id || !user.email) {
+                return { error: "Datos de usuario incompletos" };
+            }
 
-            return { token };
+            const token = jwt.sign({ id: user.id }, "CLAVESECRETA123456@$PEMI", { expiresIn: "12h" });
+
+            return { 
+                token, 
+                user: { 
+                    id: user.id, 
+                    email: user.email 
+                } 
+            };
 
         } catch (error) {
             console.error("Error al logear al usuario:", error);
-            return { error: "Error interno del servidor" }
-
+            return { error: "Error interno del servidor" };
         }
     }
 
@@ -53,11 +76,18 @@ export class UserService {
             }
 
             const hashedPassword = await bcrypt.hash(userData.password || '', 10);
+            const verificationCode = Math.floor(1000 + Math.random() * 9000).toString(); 
+            
             const newUser = this.userRepository.create({
                 ...userData,
                 password: hashedPassword,
+                isVerified: false, 
+                verificationCode: verificationCode 
             });
+
             const savedUser = await this.userRepository.save(newUser);
+
+            
 
             const defaultRole = await this.rolesRepository.findOne({ where: { nombre: 'usuario' } });
             if (!defaultRole) {
@@ -70,11 +100,45 @@ export class UserService {
             });
 
             await this.userPerRolesRepository.save(userRole);
+            
+            await emailService.sendVerificationCode(savedUser.email!, verificationCode);
+
+            console.log(`Código de verificación para ${savedUser.email}: ${verificationCode}`);
 
             return { user: savedUser };
         } catch (error) {
             console.error('Error al registrar usuario:', error);
             return { error: 'Error al registrar usuario.' };
+        }
+    }
+
+    public async verifyUser(email: string, code: string): Promise<{ 
+        success: boolean; 
+        error?: string;
+        user?: User; 
+    }> {
+        try {
+            const user = await this.userRepository.findOne({ where: { email } });
+            
+            if (!user) {
+                return { success: false, error: 'Usuario no encontrado.' };
+            }
+            
+            if (user.isVerified) {
+                return { success: false, error: 'El usuario ya está verificado.' };
+            }
+            
+            if (user.verificationCode !== code) {
+                return { success: false, error: 'Código de verificación incorrecto.' };
+            }
+            
+            user.isVerified = true;
+            const updatedUser = await this.userRepository.save(user);
+            
+            return { success: true, user: updatedUser }; 
+        } catch (error) {
+            console.error('Error al verificar usuario:', error);
+            return { success: false, error: 'Error al verificar usuario.' };
         }
     }
 }
