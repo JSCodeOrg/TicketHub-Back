@@ -62,7 +62,7 @@ export class EventController {
         }
 
         try {
-            const events = await this.eventService.getAllEvents();
+            const events = await this.eventService.getRandomEvents();
 
             res.status(200).json({
                 message: "Eventos obtenidos con éxito.",

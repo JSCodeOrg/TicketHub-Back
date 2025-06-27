@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import { User } from "../entities/User";
 import { UserPerRoles } from "../entities/users_per_roles";
 import { Eventos } from "../entities/Event";
+import { EventSummaryDTO } from "../dtos/Event/EventSummaryDTO";
 
 export class EventService {
 
@@ -80,41 +81,31 @@ export class EventService {
 
     }
 
-    public async getAllEvents(): Promise<EventDTO[] | { message: string }> {
+    public async getRandomEvents(): Promise<EventSummaryDTO[]> {
         try {
-            const events = await this.eventRepository.find({
-                relations: ['responsable', 'ticketTypes']
-            });
+            const events = await this.eventRepository
+                .createQueryBuilder("event")
+                .leftJoinAndSelect("event.responsable", "responsable")
+                .orderBy("RANDOM()") 
+                .limit(5)
+                .getMany();
 
-            if (!events || events.length === 0) {
-                return { message: "No hay eventos disponibles." };
-            }
-
-            const eventDTOs: EventDTO[] = events.map(event => ({
-                id: event.id!,
+            const eventDTOs: EventSummaryDTO[] = events.map(event => ({
                 nombre: event.nombre!,
+                banner: event["banner"] || "https://via.placeholder.com/600x300.png?text=Evento",
                 descripcion: event.descripcion!,
-                aforo: event.aforo!,
                 fecha: event.fecha!,
                 responsable: {
-                    id: event.responsable?.id!,
                     nombre: event.responsable?.nombre!,
-                    foto: event.responsable?.foto 
-                },
-                ticketTypes: event.ticketTypes?.map(tt => ({
-                    id: tt.id!,
-                    nombre: tt.nombre!,
-                    precio: tt.precio!,
-                    cantidad_total: tt.cantidad_total!,
-                    cantidad_disponible: tt.cantidad_disponible!
-                })) || []
+                    foto: event.responsable?.foto
+                }
             }));
 
             return eventDTOs;
 
         } catch (error) {
-            console.error('Error al obtener eventos:', error);
-            throw new Error('Error al obtener eventos');
+            console.error("Error al obtener eventos aleatorios:", error);
+            throw new Error("Error al obtener eventos aleatorios");
         }
     }
 }

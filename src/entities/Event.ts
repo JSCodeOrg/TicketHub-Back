@@ -18,6 +18,9 @@ export class Eventos {
     @Column()
     aforo?: number;
 
+    @Column({nullable: true})
+    banner?: string;
+
     @Column()
     fecha?: Date;
 
