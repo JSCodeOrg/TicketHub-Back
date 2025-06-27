@@ -21,6 +21,9 @@ export class Eventos {
     @Column({nullable: true})
     banner?: string;
 
+    @Column({nullable: true})
+    categoria?: string;
+
     @Column()
     fecha?: Date;
 

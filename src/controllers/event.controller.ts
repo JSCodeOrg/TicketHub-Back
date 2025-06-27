@@ -73,4 +73,38 @@ export class EventController {
             res.status(500).json({ message: "Error interno al obtener los eventos.", error: (error as Error).message });
         }
     }
+
+    public async updateEvent(req: Request, res: Response): Promise<void> {
+        const eventData: EventDTO = req.body;
+        const eventId: number = Number(req.params.id);  // El ID debe venir en la URL (más limpio)
+
+        const { authorization } = req.headers;
+
+        if (!authorization || !authorization.startsWith('Bearer ')) {
+            res.status(403).json({ message: "El usuario no está autenticado." });
+            return;
+        }
+
+        if (!eventData) {
+            res.status(400).json({ message: "Se requiere la información del evento." });
+            return;
+        }
+
+        try {
+            const editedEvent = await this.eventService.updateEvent(eventId, eventData, authorization);
+
+            if ((editedEvent as any).error) {
+                res.status(400).json({ message: (editedEvent as any).error });
+                return;
+            }
+
+            res.status(200).json({
+                message: "Evento actualizado con éxito.",
+                event: editedEvent
+            });
+        } catch (error) {
+            console.error("Error al actualizar evento:", error);
+            res.status(500).json({ message: "Error interno al actualizar el evento.", error: (error as Error).message });
+        }
+    }
 }
