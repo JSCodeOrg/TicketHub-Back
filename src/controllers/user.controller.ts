@@ -9,50 +9,50 @@ export class UserController {
     }
 
     public async login(req: Request, res: Response): Promise<void> {
-    const { email, password } = req.body;
+        const { email, password } = req.body;
 
-    if (!email || !password) {
-        res.status(400).json({ 
-            success: false,
-            message: 'Email y contraseña requeridos.' 
-        });
-        return;
-    }
-
-    try {
-        const result = await this.userService.loginUser(email, password);
-        
-        if (result.error) {
-            res.status(401).json({ 
+        if (!email || !password) {
+            res.status(400).json({
                 success: false,
-                message: result.error 
+                message: 'Email y contraseña requeridos.'
             });
-        } else if (result.token) {
-            res.status(200).json({ 
-                success: true,
-                message: 'Inicio de sesión exitoso.', 
-                token: result.token,
+            return;
+        }
 
-                user: {
-                    id: result.user?.id,
-                    email: result.user?.email,
+        try {
+            const result = await this.userService.loginUser(email, password);
 
-                }
-            });
-        } else {
-            res.status(500).json({ 
+            if (result.error) {
+                res.status(401).json({
+                    success: false,
+                    message: result.error
+                });
+            } else if (result.token) {
+                res.status(200).json({
+                    success: true,
+                    message: 'Inicio de sesión exitoso.',
+                    token: result.token,
+
+                    user: {
+                        id: result.user?.id,
+                        email: result.user?.email,
+
+                    }
+                });
+            } else {
+                res.status(500).json({
+                    success: false,
+                    message: 'Ocurrió un error inesperado durante el login.'
+                });
+            }
+        } catch (error) {
+            console.error('Error en el controlador de login:', error);
+            res.status(500).json({
                 success: false,
-                message: 'Ocurrió un error inesperado durante el login.' 
+                message: 'Error al intentar hacer login, por favor intenta más tarde'
             });
         }
-    } catch (error) {
-        console.error('Error en el controlador de login:', error);
-        res.status(500).json({ 
-            success: false,
-            message: 'Error al intentar hacer login, por favor intenta más tarde' 
-        });
     }
-}
 
     public async register(req: Request, res: Response): Promise<void> {
         const { email, password, nombre, apellido, documento, foto } = req.body;
@@ -63,7 +63,7 @@ export class UserController {
         }
 
         try {
-            const result = await this.userService.registerUser({ email, password, nombre, apellido, documento});
+            const result = await this.userService.registerUser({ email, password, nombre, apellido, documento });
 
             if (result.error) {
                 res.status(409).json({ message: result.error });
@@ -76,12 +76,9 @@ export class UserController {
         }
     }
 
-
-
-
     public async verify(req: Request, res: Response): Promise<void> {
-        console.log('Cuerpo de la solicitud:', req.body); 
-        
+        console.log('Cuerpo de la solicitud:', req.body);
+
         const { email, code } = req.body;
 
         if (!email || !code) {
@@ -98,18 +95,21 @@ export class UserController {
                 res.status(400).json({ message: result.error });
             } else {
                 console.log('Usuario verificado:', email);
-                res.status(200).json({ 
+                res.status(200).json({
                     message: 'Usuario verificado correctamente.',
-                    user: result.user 
+                    user: result.user
                 });
             }
         } catch (error: unknown) {
             console.error('Error en el controlador de verificación:', error);
             const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-            res.status(500).json({ 
+            res.status(500).json({
                 message: 'Error interno al verificar usuario.',
                 error: errorMessage
             });
         }
     }
+
+    
+
 }
