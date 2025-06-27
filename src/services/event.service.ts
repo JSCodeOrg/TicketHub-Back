@@ -79,4 +79,42 @@ export class EventService {
         return savedEvent;
 
     }
+
+    public async getAllEvents(): Promise<EventDTO[] | { message: string }> {
+        try {
+            const events = await this.eventRepository.find({
+                relations: ['responsable', 'ticketTypes']
+            });
+
+            if (!events || events.length === 0) {
+                return { message: "No hay eventos disponibles." };
+            }
+
+            const eventDTOs: EventDTO[] = events.map(event => ({
+                id: event.id!,
+                nombre: event.nombre!,
+                descripcion: event.descripcion!,
+                aforo: event.aforo!,
+                fecha: event.fecha!,
+                responsable: {
+                    id: event.responsable?.id!,
+                    nombre: event.responsable?.nombre!,
+                    foto: event.responsable?.foto 
+                },
+                ticketTypes: event.ticketTypes?.map(tt => ({
+                    id: tt.id!,
+                    nombre: tt.nombre!,
+                    precio: tt.precio!,
+                    cantidad_total: tt.cantidad_total!,
+                    cantidad_disponible: tt.cantidad_disponible!
+                })) || []
+            }));
+
+            return eventDTOs;
+
+        } catch (error) {
+            console.error('Error al obtener eventos:', error);
+            throw new Error('Error al obtener eventos');
+        }
+    }
 }

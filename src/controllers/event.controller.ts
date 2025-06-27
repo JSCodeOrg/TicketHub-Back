@@ -30,7 +30,6 @@ export class EventController {
             return;
         }
 
-        // Validar token
         if (!authorization || !authorization.startsWith('Bearer ')) {
             res.status(400).json({ message: 'Falta el token de usuario.' });
             return;
@@ -51,6 +50,27 @@ export class EventController {
 
         } catch (error) {
             res.status(500).json({ message: "Error interno al crear el evento.", error: (error as Error).message });
+        }
+    }
+
+    public async getEvents(req: Request, res: Response): Promise<void> {
+        const { authorization } = req.headers;
+
+        if (!authorization || !authorization.startsWith('Bearer ')) {
+            res.status(400).json({ message: 'Falta el token de usuario.' });
+            return;
+        }
+
+        try {
+            const events = await this.eventService.getAllEvents();
+
+            res.status(200).json({
+                message: "Eventos obtenidos con éxito.",
+                events
+            });
+
+        } catch (error) {
+            res.status(500).json({ message: "Error interno al obtener los eventos.", error: (error as Error).message });
         }
     }
 }

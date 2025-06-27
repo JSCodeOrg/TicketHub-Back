@@ -29,4 +29,5 @@ router.post('/auth/login', (req, res) => userController.login(req, res));
 router.post('/register', (req, res) => userController.register(req, res));
 router.post('/auth/verify', (req, res) => userController.verify(req, res));
 router.post('/eventos', (req,res) => eventController.createEvent(req, res));
+router.get('/eventos', (req,res) => eventController.getEvents(req, res));
 export default router;
