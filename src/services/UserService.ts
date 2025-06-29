@@ -143,8 +143,6 @@ export class UserService {
     }
 
 
-
-
     public async updateUserProfile(
         userId: number, 
         updateData: { 
@@ -191,4 +189,36 @@ export class UserService {
         return null;
     }
 }
+
+    public async verifyUserPassword(
+        userId: number, 
+        currentPassword: string
+    ): Promise<{ 
+        isValid: boolean; 
+        error?: string 
+    }> {
+        try {
+
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+            select: ['id', 'password'] 
+        });
+
+        if (!user) {
+            return { isValid: false, error: 'Usuario no encontrado' };
+        }
+
+        if (!user.password) {
+            return { isValid: false, error: 'Credenciales inválidas' };
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        
+        return { isValid: isMatch };
+    } catch (error) {
+        console.error('Error en verifyUserPassword:', error);
+        return { isValid: false, error: 'Error al verificar contraseña' };
+    }
+}
+    
 }

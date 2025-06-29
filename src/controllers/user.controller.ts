@@ -146,35 +146,77 @@ export class UserController {
 
 
     public async getUserProfile(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
+        const { id } = req.params;
 
-    try {
-        const user = await this.userService.getUserById(parseInt(id));
+        try {
+            const user = await this.userService.getUserById(parseInt(id));
 
-        if (!user) {
-            res.status(404).json({ 
-                success: false,
-                message: 'Usuario no encontrado' 
-            });
-            return;
-        }
-
-        res.status(200).json({ 
-            success: true,
-            user: {
-                id: user.id,
-                nombre: user.nombre,
-                apellido: user.apellido,
-                email: user.email,
-                documento: user.documento
+            if (!user) {
+                res.status(404).json({ 
+                    success: false,
+                    message: 'Usuario no encontrado' 
+                });
+                return;
             }
-        });
-    } catch (error) {
-        console.error('Error al obtener perfil:', error);
-        res.status(500).json({ 
-            success: false,
-            message: 'Error interno al obtener perfil' 
-        });
+
+            res.status(200).json({ 
+                success: true,
+                user: {
+                    id: user.id,
+                    nombre: user.nombre,
+                    apellido: user.apellido,
+                    email: user.email,
+                    documento: user.documento
+                }
+            });
+        } catch (error) {
+            console.error('Error al obtener perfil:', error);
+            res.status(500).json({ 
+                success: false,
+                message: 'Error interno al obtener perfil' 
+            });
+        }
     }
-}
+
+    public async verifypassword(req: Request, res: Response): Promise<void> {
+        try {
+            const { userId, currentPassword } = req.body;
+            
+            // Validar entrada
+            if (!userId || !currentPassword) {
+                res.status(400).json({ 
+                    success: false,
+                    message: 'Se requieren userId y currentPassword' 
+                });
+                return;
+            }
+
+            // Usar el servicio para verificar la contraseña
+            const result = await this.userService.verifyUserPassword(
+                parseInt(userId), 
+                currentPassword
+            );
+            
+            if (result.error) {
+                res.status(401).json({ 
+                    success: false,
+                    message: result.error 
+                });
+                return;
+            }
+
+            res.json({ 
+                success: true,
+                isValid: result.isValid 
+            });
+        } catch (error) {
+            console.error('Error en verifypassword:', error);
+            
+            res.status(500).json({ 
+                success: false,
+                message: 'Error al verificar credenciales' 
+            });
+        }
+    }
+        
 }
