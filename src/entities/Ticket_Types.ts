@@ -23,5 +23,4 @@ export class TicketTypes {
     @Column()
     cantidad_disponible?: number;
 
-    
 }

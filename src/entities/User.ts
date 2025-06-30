@@ -21,8 +21,8 @@ export class User {
     @Column()
     documento?: number;
 
-    //@Column()
-    //foto?: string;
+    @Column({nullable: true})
+    foto?: string;
 
     @OneToMany(() => UserPerRoles, userPerRoles => userPerRoles.user)
     userPerRoles?: UserPerRoles[];
