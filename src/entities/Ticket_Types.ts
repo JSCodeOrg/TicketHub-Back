@@ -20,7 +20,7 @@ export class TicketTypes {
     @Column()
     cantidad_total?: number;
 
-    @Column()
-    cantidad_disponible?: number;
+     @Column({ nullable: false })
+    cantidad_disponible!: number;
 
 }

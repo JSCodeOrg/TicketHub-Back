@@ -54,27 +54,55 @@ export class UserController {
         }
     }
 
+    
+    
     public async register(req: Request, res: Response): Promise<void> {
-        const { email, password, nombre, apellido, documento, foto } = req.body;
+        const { email, password, nombre, apellido, documento, rol } = req.body;
 
         if (!email || !password || !nombre || !apellido || !documento) {
             res.status(400).json({ message: 'Faltan campos requeridos.' });
             return;
         }
 
+        // Validar que el documento sea número
+        const documentoNumber = Number(documento);
+        if (isNaN(documentoNumber)) {
+            res.status(400).json({ message: 'El documento debe ser un número.' });
+            return;
+        }
+
+        // Validar el rol si viene
+        if (rol && ![1, 2].includes(Number(rol))) {
+            res.status(400).json({ message: 'Rol no válido. Debe ser 1 (usuario) o 2 (eventos).' });
+            return;
+        }
+
         try {
-            const result = await this.userService.registerUser({ email, password, nombre, apellido, documento });
+            const result = await this.userService.registerUser({ 
+                email, 
+                password, 
+                nombre, 
+                apellido, 
+                documento: documentoNumber,
+                rol: rol ? Number(rol) : undefined // Pasar como número o undefined
+            });
 
             if (result.error) {
-                res.status(409).json({ message: result.error });
+                const statusCode = result.error.includes('existe') ? 409 : 400;
+                res.status(statusCode).json({ message: result.error });
             } else {
-                res.status(201).json({ message: 'Usuario registrado correctamente.', user: result.user });
+                res.status(201).json({ 
+                    message: 'Usuario registrado correctamente.', 
+                    user: result.user 
+                });
             }
         } catch (error) {
             console.error('Error en el controlador de registro:', error);
             res.status(500).json({ message: 'Error interno al registrar usuario.' });
         }
     }
+
+
 
     public async verify(req: Request, res: Response): Promise<void> {
         console.log('Cuerpo de la solicitud:', req.body);

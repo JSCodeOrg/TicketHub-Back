@@ -9,6 +9,8 @@ import { Eventos } from "../entities/Event";
 import { EventSummaryDTO } from "../dtos/Event/EventSummaryDTO";
 import { DataSource } from "typeorm";
 
+
+
 export class EventService {
 
 
@@ -200,4 +202,27 @@ export class EventService {
             return event;
         });
     }
+
+
+
+
+
+
+
+
+
+
+
+
+    public async getEventsByUser(userId: number): Promise<Eventos[]> {
+    try {
+        return await this.eventRepository.find({
+            where: { responsable: { id: userId } },
+            relations: ['responsable', 'ticketTypes']
+        });
+    } catch (error) {
+        console.error("Error al obtener eventos del usuario:", error);
+        throw new Error("Error al obtener eventos del usuario");
+    }
+}
 }

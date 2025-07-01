@@ -68,49 +68,68 @@ export class UserService {
         }
     }
 
-    public async registerUser(userData: Partial<User>): Promise<{ user?: User; error?: string }> {
-        try {
-            const existing = await this.userRepository.findOne({ where: { email: userData.email } });
-            if (existing) {
-                return { error: 'Ya existe un usuario registrado con ese correo electrónico.' };
-            }
+    
 
-            const hashedPassword = await bcrypt.hash(userData.password || '', 10);
-            const verificationCode = Math.floor(1000 + Math.random() * 9000).toString(); 
-            
-            const newUser = this.userRepository.create({
-                ...userData,
-                password: hashedPassword,
-                isVerified: false, 
-                verificationCode: verificationCode 
-            });
-
-            const savedUser = await this.userRepository.save(newUser);
-
-            
-
-            const defaultRole = await this.rolesRepository.findOne({ where: { nombre: 'usuario' } });
-            if (!defaultRole) {
-                return { error: 'Rol por defecto "usuario" no encontrado.' };
-            }
-
-            const userRole = this.userPerRolesRepository.create({
-                user: savedUser,
-                role: defaultRole,
-            });
-
-            await this.userPerRolesRepository.save(userRole);
-            
-            await emailService.sendVerificationCode(savedUser.email!, verificationCode);
-
-            console.log(`Código de verificación para ${savedUser.email}: ${verificationCode}`);
-
-            return { user: savedUser };
-        } catch (error) {
-            console.error('Error al registrar usuario:', error);
-            return { error: 'Error al registrar usuario.' };
+    public async registerUser(userData: {
+    email: string;
+    password: string;
+    nombre: string;
+    apellido: string;
+    documento: number;
+    rol?: number; 
+}): Promise<{ user?: User; error?: string }> {
+    try {
+        const existing = await this.userRepository.findOne({ 
+            where: { email: userData.email } 
+        });
+        if (existing) {
+            return { error: 'Ya existe un usuario registrado con ese correo electrónico.' };
         }
+
+        const hashedPassword = await bcrypt.hash(userData.password, 10);
+        const verificationCode = Math.floor(1000 + Math.random() * 9000).toString();
+        
+        // Crear el usuario sin el campo rol
+        const newUser = this.userRepository.create({
+            email: userData.email,
+            password: hashedPassword,
+            nombre: userData.nombre,
+            apellido: userData.apellido,
+            documento: userData.documento,
+            isVerified: false,
+            verificationCode: verificationCode
+        });
+
+        const savedUser = await this.userRepository.save(newUser);
+
+        // Manejar el rol por separado
+        const roleId = userData.rol || 1; // Default a 1 si no se especifica
+        const role = await this.rolesRepository.findOne({ 
+            where: { id: roleId } 
+        });
+        
+        if (!role) {
+            return { error: 'Rol no encontrado.' };
+        }
+
+        const userRole = this.userPerRolesRepository.create({
+            user: savedUser,
+            role: role
+        });
+
+        await this.userPerRolesRepository.save(userRole);
+        
+        await emailService.sendVerificationCode(savedUser.email!, verificationCode);
+        console.log(`Código de verificación para ${savedUser.email}: ${verificationCode}`);
+
+        return { user: savedUser };
+    } catch (error) {
+        console.error('Error al registrar usuario:', error);
+        return { error: 'Error al registrar usuario.' };
     }
+}
+
+
 
     public async verifyUser(email: string, code: string): Promise<{ 
         success: boolean; 

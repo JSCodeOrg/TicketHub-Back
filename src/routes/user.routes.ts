@@ -37,4 +37,9 @@ router.post('/eventos', (req,res) => eventController.createEvent(req, res));
 router.get('/eventos', (req,res) => eventController.getEvents(req, res));
 router.put('/eventos/:id', (req, res) => eventController.updateEvent(req, res));
 
+
+
+router.get('/eventos/usuario', (req, res) => eventController.getUserEvents(req, res));
+
+
 export default router;

@@ -4,8 +4,11 @@ import { EventService } from "../services/event.service";
 import { UserService } from "../services/UserService";
 import { EventDTO } from "../dtos/Event/EventDTO";
 
+import * as jwt from 'jsonwebtoken';
 
 export class EventController {
+
+    private secretkey = "CLAVESECRETA123456@$PEMI"
 
     eventService: EventService;
 
@@ -107,4 +110,36 @@ export class EventController {
             res.status(500).json({ message: "Error interno al actualizar el evento.", error: (error as Error).message });
         }
     }
+
+public async getUserEvents(req: Request, res: Response): Promise<void> {
+    const { authorization } = req.headers;
+
+    if (!authorization || !authorization.startsWith('Bearer ')) {
+        res.status(400).json({ message: 'Falta el token de usuario.' });
+        return;
+    }
+
+    try {
+        const token = authorization.substring(7);
+        const decoded = jwt.verify(token, this.secretkey) as jwt.JwtPayload;
+        const userId = decoded.id;
+
+        const events = await this.eventService.getEventsByUser(userId);
+
+        res.status(200).json({
+            message: "Eventos del usuario obtenidos con éxito.",
+            events
+        });
+
+    } catch (error) {
+        res.status(500).json({ 
+            message: "Error interno al obtener los eventos del usuario.", 
+            error: (error as Error).message 
+        });
+    }
+}
+
+
+
+
 }
