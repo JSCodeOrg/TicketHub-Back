@@ -123,6 +123,7 @@ export class TicketService {
         JOIN "Tipos_tickets" tt ON t."tipo_ticket_id" = tt."id"
         JOIN "Eventos" e ON tt."evento_id" = e."id"
         WHERE t."usuario_id" = $1 AND e."id" = $2
+        AND t."estado" = 'ACTIVO'
     `, [userId, eventoId]);
 
         const results: { nombreTipoTicket: string; qrFile: string }[] = [];
