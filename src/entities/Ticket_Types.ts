@@ -1,5 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Eventos } from "./Event";
+import { Ticket } from "./Ticket";
 
 
 @Entity('Tipos_tickets')
@@ -22,5 +23,8 @@ export class TicketTypes {
 
     @Column()
     cantidad_disponible?: number;
+
+    @OneToMany(() => Ticket, ticket => ticket.tipoTicket)
+    tickets?: Ticket[];
 
 }

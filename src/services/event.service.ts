@@ -157,7 +157,7 @@ export class EventService {
                 const existingType = existingTypes.find(et => et.id === incomingType.id);
 
                 if (existingType) {
-                   
+
                     const vendidosTipo = await this.ticketRepository.count({
                         where: { tipoTicket: { id: existingType.id } }
                     });
@@ -198,5 +198,28 @@ export class EventService {
 
             return event;
         });
+    }
+
+    public async getUserEvents(userId: number): Promise<{ nombre: string; banner: string | null; fecha: Date }[]> {
+        try {
+            const events = await this.eventRepository
+                .createQueryBuilder("evento")
+                .innerJoin("evento.ticketTypes", "ticketType")
+                .innerJoin("ticketType.tickets", "ticket")
+                .where("ticket.usuario_id = :userId", { userId })
+                .getMany();
+
+            const eventDTOs = events.map(event => ({
+                nombre: event.nombre!,
+                banner: event.banner || "https://via.placeholder.com/600x300.png?text=Evento",
+                fecha: event.fecha!
+            }));
+
+            return eventDTOs;
+
+        } catch (error) {
+            console.error("Error al obtener eventos del usuario:", error);
+            throw new Error("Error al obtener eventos del usuario");
+        }
     }
 }

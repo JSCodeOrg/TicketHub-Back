@@ -36,8 +36,11 @@ router.post('/auth/verify', (req, res) => userController.verify(req, res));
 router.post('/eventos', (req,res) => eventController.createEvent(req, res));
 router.get('/eventos', (req,res) => eventController.getEvents(req, res));
 router.put('/eventos/:id', (req, res) => eventController.updateEvent(req, res));
+router.get("/tickets/eventos", (req, res) => eventController.getUserEvents(req, res)); 
 router.get('/tickets/:idEvento', (req, res) => ticketController.getTickets(req, res));
 router.post('/comprar', (req, res) => ticketController.comprarTicket(req, res));
+
+
 
 
 

@@ -3,6 +3,7 @@ import { TicketTypes } from "../entities/Ticket_Types";
 import { EventService } from "../services/event.service";
 import { UserService } from "../services/UserService";
 import { EventDTO } from "../dtos/Event/EventDTO";
+import * as jwt from 'jsonwebtoken';
 
 
 export class EventController {
@@ -76,7 +77,7 @@ export class EventController {
 
     public async updateEvent(req: Request, res: Response): Promise<void> {
         const eventData: EventDTO = req.body;
-        const eventId: number = Number(req.params.id);  
+        const eventId: number = Number(req.params.id);
 
         const { authorization } = req.headers;
 
@@ -108,4 +109,23 @@ export class EventController {
         }
     }
 
+    public async getUserEvents(req: Request, res: Response): Promise<void> {
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader) {
+            res.status(401).json({ message: "No se proporcionó el token" });
+            return;
+        }
+
+        try {
+            const token = authHeader.split(' ')[1];
+            const decoded = jwt.verify(token, "CLAVESECRETA123456@$PEMI") as { id: number };
+
+            const userEvents = await this.eventService.getUserEvents(decoded.id);
+            res.status(200).json(userEvents);
+        } catch (error) {
+            console.error("Error al obtener los eventos del usuario:", error);
+            res.status(500).json({ message: "Error interno al obtener los eventos", error: (error as Error).message });
+        }
+    }
 }
