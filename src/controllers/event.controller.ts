@@ -107,4 +107,5 @@ export class EventController {
             res.status(500).json({ message: "Error interno al actualizar el evento.", error: (error as Error).message });
         }
     }
+
 }

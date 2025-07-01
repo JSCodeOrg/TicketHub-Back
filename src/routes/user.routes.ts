@@ -10,6 +10,8 @@ import { EventService } from '../services/event.service';
 import { Eventos } from '../entities/Event';
 import { Ticket } from '../entities/Ticket';
 import { TicketTypes } from '../entities/Ticket_Types';
+import { TicketController } from '../controllers/ticket.controller';
+import { TicketService } from '../services/ticket.service';
 
 const router = Router();
 
@@ -25,10 +27,14 @@ const userController = new UserController(userService);
 const eventService = new EventService(eventRepository, ticketRepository, ticketTipeRepository, userRepository, userPerRolesRepository, AppDataSource);
 const eventController = new EventController(eventService);
 
+const ticketService = new TicketService(ticketRepository, eventRepository, ticketTipeRepository);
+const ticketController = new TicketController(ticketService);
+
 router.post('/auth/login', (req, res) => userController.login(req, res));
 router.post('/register', (req, res) => userController.register(req, res));
 router.post('/auth/verify', (req, res) => userController.verify(req, res));
 router.post('/eventos', (req,res) => eventController.createEvent(req, res));
 router.get('/eventos', (req,res) => eventController.getEvents(req, res));
 router.put('/eventos/:id', (req, res) => eventController.updateEvent(req, res));
+router.get('/tickets/:idEvento', (req, res) => ticketController.getTickets(req, res));
 export default router;
