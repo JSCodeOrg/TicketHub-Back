@@ -85,7 +85,7 @@ export class TicketService {
                 eventoId: ticketType.evento.id,
                 ticketId: ticketId,
                 ticketNumber: i + 1,
-                iat: Math.floor(Date.now() / 1000), 
+                iat: Math.floor(Date.now() / 1000),
                 eventoFecha: ticketType.evento.fecha
             };
 
@@ -112,6 +112,51 @@ export class TicketService {
         await this.ticketTypeRep.save(ticketType);
 
         return savedPaths;
+    }
+
+    public async getUserTicketsForEventWithFiles(
+        userId: number,
+        eventoId: number
+    ): Promise<{ nombreTipoTicket: string; qrFile: string }[]> {
+        // 🚩 Usamos query nativo porque el problema viene de TypeORM no mapeando la relación correctamente
+        const tickets = await this.ticketRepository.query(`
+        SELECT t."qrPath", tt."nombre" AS "nombreTipoTicket"
+        FROM "Tickets" t
+        JOIN "Tipos_tickets" tt ON t."tipo_ticket_id" = tt."id"
+        JOIN "Eventos" e ON tt."evento_id" = e."id"
+        WHERE t."usuario_id" = $1 AND e."id" = $2
+    `, [userId, eventoId]);
+
+        const results: { nombreTipoTicket: string; qrFile: string }[] = [];
+
+        for (const t of tickets) {
+            if (!t.qrPath) {
+                continue;
+            }
+
+            try {
+                const stream = await minioClient.getObject('tickets', t.qrPath);
+
+                const buffer = await new Promise<Buffer>((resolve, reject) => {
+                    const chunks: Buffer[] = [];
+                    stream.on('data', (chunk) => chunks.push(chunk));
+                    stream.on('end', () => resolve(Buffer.concat(chunks)));
+                    stream.on('error', (err) => reject(err));
+                });
+
+                const base64Image = `data:image/png;base64,${buffer.toString('base64')}`;
+
+                results.push({
+                    nombreTipoTicket: t.nombreTipoTicket,
+                    qrFile: base64Image
+                });
+
+            } catch (err) {
+                console.error(`Error al recuperar QR para ticket:`, err);
+            }
+        }
+
+        return results;
     }
 }
 

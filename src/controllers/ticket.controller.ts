@@ -71,4 +71,29 @@ export class TicketController {
             res.status(500).json({ message: 'Error interno al generar la preferencia.', error: (error as Error).message });
         }
     }
+
+    public async getUserTicketsForEvent(req: Request, res: Response): Promise<void> {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            res.status(401).json({ message: "No se proporcionó el token" });
+            return;
+        }
+
+        try {
+            const token = authHeader.split(' ')[1];
+            const decoded = jwt.verify(token, "CLAVESECRETA123456@$PEMI") as { id: number };
+
+            const eventoId = parseInt(req.params.eventoId, 10);
+            if (isNaN(eventoId)) {
+                res.status(400).json({ message: "El idEvento debe ser un número válido." });
+                return;
+            }
+
+            const result = await this.ticketService.getUserTicketsForEventWithFiles(decoded.id, eventoId);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error("Error al obtener tickets del usuario para el evento:", error);
+            res.status(500).json({ message: "Error interno al obtener los tickets", error: (error as Error).message });
+        }
+    }
 }
