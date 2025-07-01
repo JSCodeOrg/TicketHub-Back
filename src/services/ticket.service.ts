@@ -37,8 +37,6 @@ export class TicketService {
     }
 
 
-
-
     public async getTickets(EventId: number): Promise<{ nombre: string; cantidad_disponible: number }[]> {
         const ticketTypes = await this.ticketTypeRep.find({
             where: {
@@ -118,7 +116,7 @@ export class TicketService {
         userId: number,
         eventoId: number
     ): Promise<{ nombreTipoTicket: string; qrFile: string }[]> {
-        
+
         const tickets = await this.ticketRepository.query(`
         SELECT t."qrPath", tt."nombre" AS "nombreTipoTicket"
         FROM "Tickets" t
@@ -159,7 +157,47 @@ export class TicketService {
         return results;
     }
 
+    public async validarYUsarTicket(token: string): Promise<string> {
+        try {
+            const decoded = jwt.verify(token, "CLAVESECRETA123456@$PEMI") as { ticketId: number };
 
+            const ticketId = decoded.ticketId;
+
+            console.log(ticketId)
+            console.log(ticketId)
+            console.log(ticketId)
+            console.log(ticketId)
+            console.log(ticketId)
+
+            const ticket = await this.ticketRepository.findOne({
+                where: { id: ticketId }
+            });
+
+            if (!ticket) {
+                throw new Error("Ticket no encontrado");
+            }
+
+            if (ticket.estado !== 'ACTIVO') {
+                throw new Error(`El ticket no está activo (estado actual: ${ticket.estado})`);
+            }
+
+            ticket.estado = 'USADO';
+            await this.ticketRepository.save(ticket);
+
+            return `El ticket ${ticketId} ha sido validado y marcado como USADO`;
+        } catch (err) {
+            if (err instanceof jwt.TokenExpiredError) {
+                throw new Error("El token del ticket ha expirado");
+            }
+            if (err instanceof jwt.JsonWebTokenError) {
+                throw new Error("El token del ticket no es válido");
+            }
+            if (err instanceof Error) {
+                throw new Error(err.message);
+            }
+            throw new Error("Error desconocido");
+        }
+    }
 }
 
 

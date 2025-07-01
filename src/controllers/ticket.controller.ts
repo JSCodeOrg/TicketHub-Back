@@ -96,4 +96,22 @@ export class TicketController {
             res.status(500).json({ message: "Error interno al obtener los tickets", error: (error as Error).message });
         }
     }
+
+    public async validarYUsarTicket(req: Request, res: Response): Promise<void> {
+        try {
+            const { token } = req.body;
+
+            if (!token) {
+                res.status(400).json({ message: "Se requiere el token del ticket" });
+                return;
+            }
+
+            const mensaje = await this.ticketService.validarYUsarTicket(token);
+            res.status(200).json({ message: mensaje });
+
+        } catch (error) {
+            console.error("Error al validar ticket:", error);
+            res.status(400).json({ message: (error as Error).message });
+        }
+    }
 }

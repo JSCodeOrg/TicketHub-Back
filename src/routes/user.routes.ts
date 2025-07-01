@@ -27,19 +27,26 @@ const userController = new UserController(userService);
 const eventService = new EventService(eventRepository, ticketRepository, ticketTipeRepository, userRepository, userPerRolesRepository, AppDataSource);
 const eventController = new EventController(eventService);
 
-const ticketService = new TicketService(ticketRepository, eventRepository, ticketTipeRepository);
+const ticketService = new TicketService(
+    eventRepository,  
+    ticketRepository,  
+    ticketTipeRepository 
+);
 const ticketController = new TicketController(ticketService);
 
 router.post('/auth/login', (req, res) => userController.login(req, res));
 router.post('/register', (req, res) => userController.register(req, res));
 router.post('/auth/verify', (req, res) => userController.verify(req, res));
-router.post('/eventos', (req,res) => eventController.createEvent(req, res));
-router.get('/eventos', (req,res) => eventController.getEvents(req, res));
+router.post('/eventos', (req, res) => eventController.createEvent(req, res));
+router.get('/eventos', (req, res) => eventController.getEvents(req, res));
 router.put('/eventos/:id', (req, res) => eventController.updateEvent(req, res));
-router.get("/tickets/eventos", (req, res) => eventController.getUserEvents(req, res)); 
+router.get("/tickets/eventos", (req, res) => eventController.getUserEvents(req, res));
 router.get('/tickets/:idEvento', (req, res) => ticketController.getTickets(req, res));
 router.post('/comprar', (req, res) => ticketController.comprarTicket(req, res));
 router.get("/tickets/evento/:eventoId", (req, res) => ticketController.getUserTicketsForEvent(req, res));
+router.post('/tickets/validar', (req, res) => ticketController.validarYUsarTicket(req, res));
+
+
 
 
 
