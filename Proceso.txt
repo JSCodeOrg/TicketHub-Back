@@ -1,0 +1,5 @@
+entrar a la ruta de la carpeta con el archivo ngrok
+correr todos los programas
+ejecutar ngrok start --all --config=ngrok.yml
+tomar las direcciones que arroja
+cambiar las direcciones en los proyectos de frontend y api-gateway.

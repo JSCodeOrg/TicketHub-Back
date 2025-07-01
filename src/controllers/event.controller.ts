@@ -79,7 +79,7 @@ export class EventController {
 
     public async updateEvent(req: Request, res: Response): Promise<void> {
         const eventData: EventDTO = req.body;
-        const eventId: number = Number(req.params.id);  // El ID debe venir en la URL (más limpio)
+        const eventId: number = Number(req.params.id);  
 
         const { authorization } = req.headers;
 
@@ -138,8 +138,6 @@ public async getUserEvents(req: Request, res: Response): Promise<void> {
         });
     }
 }
-
-
 
 
 }

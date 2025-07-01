@@ -32,8 +32,6 @@ export class User {
 
     @Column({ nullable: true })
     verificationCode?: string;
-
-    
 }
 
 
