@@ -3,20 +3,25 @@ import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "t
 import { TicketTypes } from "./Ticket_Types";
 import { User } from "./User";
 
-@Entity('Tickets') 
+@Entity('Tickets')
 export class Ticket {
 
     @PrimaryGeneratedColumn()
     id?: number;
-    
+
     @ManyToOne(() => TicketTypes)
     @JoinColumn({ name: 'tipo_ticket_id' })
     tipoTicket?: TicketTypes;
 
     @ManyToOne(() => User)
-    @JoinColumn({ name: 'usuario_id' }) 
+    @JoinColumn({ name: 'usuario_id' })
     usuario?: User;
 
     @Column()
     estado?: string;
+
+    @Column({ nullable: true })
+    qrPath?: string;
+
+
 }
