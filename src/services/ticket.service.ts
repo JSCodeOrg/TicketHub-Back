@@ -118,7 +118,7 @@ export class TicketService {
         userId: number,
         eventoId: number
     ): Promise<{ nombreTipoTicket: string; qrFile: string }[]> {
-        // 🚩 Usamos query nativo porque el problema viene de TypeORM no mapeando la relación correctamente
+        
         const tickets = await this.ticketRepository.query(`
         SELECT t."qrPath", tt."nombre" AS "nombreTipoTicket"
         FROM "Tickets" t
@@ -158,6 +158,8 @@ export class TicketService {
 
         return results;
     }
+
+
 }
 
 
