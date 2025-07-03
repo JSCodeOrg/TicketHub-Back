@@ -210,6 +210,7 @@ export class EventService {
                 .getMany();
 
             const eventDTOs = events.map(event => ({
+                id: event.id,
                 nombre: event.nombre!,
                 banner: event.banner || "https://via.placeholder.com/600x300.png?text=Evento",
                 fecha: event.fecha!

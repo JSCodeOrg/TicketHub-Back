@@ -37,19 +37,21 @@ export class TicketService {
     }
 
 
-    public async getTickets(EventId: number): Promise<{ nombre: string; cantidad_disponible: number }[]> {
+    public async getTickets(EventId: number): Promise<{ id: number; nombre: string; cantidad_disponible: number }[]> {
         const ticketTypes = await this.ticketTypeRep.find({
             where: {
                 evento: { id: EventId }
             },
-            select: ['nombre', 'cantidad_disponible']
+            select: ['id', 'nombre', 'cantidad_disponible']
         });
 
         return ticketTypes.map(tt => ({
+            id: tt.id ?? 0,
             nombre: tt.nombre ?? '',
             cantidad_disponible: tt.cantidad_disponible ?? 0
         }));
     }
+
 
     public async generarCompra(userId: number, ticketTypeId: number, cantidad: number): Promise<string[]> {
         const ticketType = await this.ticketTypeRep.findOne({
@@ -158,20 +160,21 @@ export class TicketService {
         return results;
     }
 
-    public async validarYUsarTicket(token: string): Promise<string> {
+    public async validarYUsarTicket(token: string): Promise<{
+        ticketId: number,
+        ticketType: string,
+        evento: string,
+        validado: true
+    }> {
         try {
             const decoded = jwt.verify(token, "CLAVESECRETA123456@$PEMI") as { ticketId: number };
 
             const ticketId = decoded.ticketId;
 
-            console.log(ticketId)
-            console.log(ticketId)
-            console.log(ticketId)
-            console.log(ticketId)
-            console.log(ticketId)
-
+            // Traer el ticket con su tipo y evento asociados
             const ticket = await this.ticketRepository.findOne({
-                where: { id: ticketId }
+                where: { id: ticketId },
+                relations: ['tipoTicket', 'tipoTicket.evento']
             });
 
             if (!ticket) {
@@ -185,7 +188,13 @@ export class TicketService {
             ticket.estado = 'USADO';
             await this.ticketRepository.save(ticket);
 
-            return `El ticket ${ticketId} ha sido validado y marcado como USADO`;
+            return {
+                ticketId: ticket.id!,
+                ticketType: ticket.tipoTicket?.nombre || 'Desconocido',
+                evento: ticket.tipoTicket?.evento?.nombre || 'Desconocido',
+                validado: true
+            };
+
         } catch (err) {
             if (err instanceof jwt.TokenExpiredError) {
                 throw new Error("El token del ticket ha expirado");
@@ -197,6 +206,35 @@ export class TicketService {
                 throw new Error(err.message);
             }
             throw new Error("Error desconocido");
+        }
+    }
+
+    public async obtenerInfoTickets(eventoId: number): Promise<
+        {
+            ticketType: string;
+            activos: number;
+            usados: number;
+            disponibles: number;
+        }[]
+    > {
+        try {
+            const result = await this.ticketRepository
+                .createQueryBuilder('ticket')
+                .leftJoin('ticket.tipoTicket', 'tipoTicket')
+                .innerJoin('tipoTicket.evento', 'evento')
+                .select('tipoTicket.nombre', 'ticketType')
+                .addSelect(`COALESCE(SUM(CASE WHEN ticket.estado = 'ACTIVO' THEN 1 ELSE 0 END), 0)`, 'activos')
+                .addSelect(`COALESCE(SUM(CASE WHEN ticket.estado = 'USADO' THEN 1 ELSE 0 END), 0)`, 'usados')
+                .addSelect('tipoTicket.cantidad_disponible', 'disponibles')
+                .where('evento.id = :eventoId', { eventoId })
+                .groupBy('tipoTicket.nombre')
+                .addGroupBy('tipoTicket.cantidad_disponible')
+                .getRawMany();
+
+            return result;
+
+        } catch (error) {
+            throw new Error("No se pudo obtener la información de los tickets: " + (error as Error).message);
         }
     }
 }

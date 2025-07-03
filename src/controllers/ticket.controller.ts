@@ -106,11 +106,29 @@ export class TicketController {
                 return;
             }
 
-            const mensaje = await this.ticketService.validarYUsarTicket(token);
-            res.status(200).json({ message: mensaje });
+            const resultado = await this.ticketService.validarYUsarTicket(token);
+            res.status(200).json(resultado);
 
         } catch (error) {
             console.error("Error al validar ticket:", error);
+            res.status(400).json({ message: (error as Error).message });
+        }
+    }
+
+    public async obtenerInfoTickets(req: Request, res: Response): Promise<void> {
+        try {
+            const { eventoId } = req.params;
+
+            if (!eventoId || isNaN(parseInt(eventoId))) {
+                res.status(400).json({ message: 'Se requiere un ID de evento válido' });
+                return;
+            }
+
+            const resultado = await this.ticketService.obtenerInfoTickets(parseInt(eventoId));
+            res.status(200).json(resultado);
+
+        } catch (error) {
+            console.error("Error al obtener información de tickets:", error);
             res.status(400).json({ message: (error as Error).message });
         }
     }
