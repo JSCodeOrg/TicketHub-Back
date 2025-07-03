@@ -36,7 +36,7 @@ export class UserController {
                     user: {
                         id: result.user?.id,
                         email: result.user?.email,
-
+                        roles: result.user?.roles
                     }
                 });
             } else {

@@ -1,11 +1,13 @@
-import { TicketTypeDTO } from "../TicketTypes/TicketTypeDTO"
+import { ResponsableSummaryDTO } from "../User/ResponsableSummaryDTO";
+import { TicketTypeDTO } from "../TicketTypes/TicketTypeDTO";
 
 export interface EventDTO {
-    nombre: string,
-    ubicacion: string,
-    descripcion: string,
-    aforo: number,
-    fecha: Date,
-    responsable: number
-    ticketTypes: TicketTypeDTO[]
+  nombre: string;
+  banner: string;
+  descripcion: string;
+  fecha: Date;
+  aforo: number;
+  ubicacion: string;
+  responsable: ResponsableSummaryDTO; 
+  ticketTypes: TicketTypeDTO[];
 }

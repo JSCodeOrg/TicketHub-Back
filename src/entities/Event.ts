@@ -33,6 +33,7 @@ export class Eventos {
 
     @OneToMany(() => TicketTypes, ticketType => ticketType.evento)
     ticketTypes?: TicketTypes[];
+    ubicacion: string;
 
 
 }

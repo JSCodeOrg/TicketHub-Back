@@ -22,13 +22,14 @@ export class UserService {
 
     public async loginUser(email: string, password: string): Promise<{ 
         token?: string; 
-        user?: { id: number; email: string }; 
+        user?: { id: number; email: string; roles: number[] }; 
         error?: string 
     }> {
         try {
             const user = await this.userRepository.findOne({ 
                 where: { email },
-                select: ['id', 'email', 'password', 'isVerified']
+                select: ['id', 'email', 'password', 'isVerified'],
+                relations: ['userPerRoles', 'userPerRoles.role']
             });
 
             if (!user) {
@@ -54,11 +55,14 @@ export class UserService {
 
             const token = jwt.sign({ id: user.id }, "CLAVESECRETA123456@$PEMI", { expiresIn: "12h" });
 
+            const userRoles = user.userPerRoles?.map(up => up.role?.id).filter(id => id !== undefined) as number[] || [];
+
             return { 
                 token, 
                 user: { 
                     id: user.id, 
-                    email: user.email 
+                    email: user.email,
+                    roles: userRoles
                 } 
             };
 

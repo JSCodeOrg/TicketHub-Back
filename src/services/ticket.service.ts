@@ -53,66 +53,70 @@ export class TicketService {
         }));
     }
 
-    public async generarCompra(userId: number, ticketTypeId: number, cantidad: number): Promise<string[]> {
-        const ticketType = await this.ticketTypeRep.findOne({
-            where: { id: ticketTypeId },
-            relations: ['evento']
+    public async comprarTicketDirecto(userId: number, ticketTypeId: number, cantidad: number): Promise<any[]> {
+    const ticketType = await this.ticketTypeRep.findOne({
+        where: { id: ticketTypeId },
+        relations: ['evento']
+    });
+
+    if (!ticketType) throw new Error("Tipo de ticket no encontrado");
+    if (!ticketType.evento) throw new Error("El tipo de ticket no tiene evento asociado");
+    if (!ticketType.evento.nombre) throw new Error("El evento no tiene nombre");
+
+    if ((ticketType.cantidad_disponible ?? 0) < cantidad) {
+        throw new Error(`No hay suficientes tickets disponibles. Disponibles: ${ticketType.cantidad_disponible}`);
+    }
+
+    const createdTickets = [];
+    const eventoNameSanitized = ticketType.evento.nombre.replace(/\s+/g, '_');
+
+    for (let i = 0; i < cantidad; i++) {
+        const result = await this.ticketRepository.query(
+            `INSERT INTO "Tickets" (usuario_id, tipo_ticket_id, estado) 
+         VALUES ($1, $2, $3) RETURNING id`,
+            [userId, ticketTypeId, 'ACTIVO']
+        );
+
+        const ticketId = result[0].id;
+
+        const payload = {
+            userId,
+            ticketTypeId,
+            eventoId: ticketType.evento.id,
+            ticketId: ticketId,
+            ticketNumber: i + 1,
+            iat: Math.floor(Date.now() / 1000),
+            eventoFecha: ticketType.evento.fecha
+        };
+
+        const ticketToken = jwt.sign(payload, "CLAVESECRETA123456@$PEMI", { expiresIn: "12h" });
+
+        const qrBuffer = await QRCode.toBuffer(ticketToken, { type: 'png' });
+
+        const timestamp = Date.now();
+        const objectName = `${userId}/${eventoNameSanitized}/qr_${ticketTypeId}_${timestamp}_${i + 1}.png`;
+
+        await minioClient.putObject('tickets', objectName, qrBuffer, qrBuffer.length, {
+            'Content-Type': 'image/png'
         });
 
-        if (!ticketType) throw new Error("Tipo de ticket no encontrado");
-        if (!ticketType.evento) throw new Error("El tipo de ticket no tiene evento asociado");
-        if (!ticketType.evento.nombre) throw new Error("El evento no tiene nombre");
+        await this.ticketRepository.query(
+            `UPDATE "Tickets" SET "qrPath" = $1 WHERE id = $2`,
+            [objectName, ticketId]
+        );
 
-        if ((ticketType.cantidad_disponible ?? 0) < cantidad) {
-            throw new Error(`No hay suficientes tickets disponibles. Disponibles: ${ticketType.cantidad_disponible}`);
-        }
-
-        const savedPaths: string[] = [];
-        const eventoNameSanitized = ticketType.evento.nombre.replace(/\s+/g, '_');
-
-        for (let i = 0; i < cantidad; i++) {
-            const result = await this.ticketRepository.query(
-                `INSERT INTO "Tickets" (usuario_id, tipo_ticket_id, estado) 
-             VALUES ($1, $2, $3) RETURNING id`,
-                [userId, ticketTypeId, 'ACTIVO']
-            );
-
-            const ticketId = result[0].id;
-
-            const payload = {
-                userId,
-                ticketTypeId,
-                eventoId: ticketType.evento.id,
-                ticketId: ticketId,
-                ticketNumber: i + 1,
-                iat: Math.floor(Date.now() / 1000), 
-                eventoFecha: ticketType.evento.fecha
-            };
-
-            const ticketToken = jwt.sign(payload, "CLAVESECRETA123456@$PEMI", { expiresIn: "12h" });
-
-            const qrBuffer = await QRCode.toBuffer(ticketToken, { type: 'png' });
-
-            const timestamp = Date.now();
-            const objectName = `${userId}/${eventoNameSanitized}/qr_${ticketTypeId}_${timestamp}_${i + 1}.png`;
-
-            await minioClient.putObject('tickets', objectName, qrBuffer, qrBuffer.length, {
-                'Content-Type': 'image/png'
-            });
-
-            await this.ticketRepository.query(
-                `UPDATE "Tickets" SET "qrPath" = $1 WHERE id = $2`,
-                [objectName, ticketId]
-            );
-
-            savedPaths.push(objectName);
-        }
-
-        ticketType.cantidad_disponible = (ticketType.cantidad_disponible ?? 0) - cantidad;
-        await this.ticketTypeRep.save(ticketType);
-
-        return savedPaths;
+        createdTickets.push({
+            id: ticketId,
+            qrPath: objectName,
+            ticketNumber: i + 1
+        });
     }
+
+    ticketType.cantidad_disponible = (ticketType.cantidad_disponible ?? 0) - cantidad;
+    await this.ticketTypeRep.save(ticketType);
+
+    return createdTickets;
+}
 }
 
 

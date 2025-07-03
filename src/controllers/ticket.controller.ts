@@ -44,31 +44,36 @@ export class TicketController {
     }
 
     public async comprarTicket(req: Request, res: Response): Promise<void> {
-        const authHeader = req.headers.authorization;
-        const { ticketTypeId, cantidad } = req.body;
+    const authHeader = req.headers.authorization;
+    const { ticketTypeId, cantidad } = req.body;
 
-        if (!authHeader) {
-            res.status(401).json({ message: 'No se proporcionó token' });
-            return;
-        }
-
-        const token = authHeader.split(' ')[1];
-
-        const decoded = jwt.verify(token, "CLAVESECRETA123456@$PEMI") as { id: number };
-
-        const userId = decoded.id;
-
-        if (!ticketTypeId || !cantidad) {
-            res.status(400).json({ message: 'Faltan datos de la compra' });
-            return;
-        }
-
-        try {
-            const initPoint = await this.ticketService.generarCompra(userId, ticketTypeId, cantidad);
-            res.status(200).json({ init_point: initPoint });
-        } catch (error) {
-            console.error("Error al generar la preferencia:", error);
-            res.status(500).json({ message: 'Error interno al generar la preferencia.', error: (error as Error).message });
-        }
+    if (!authHeader) {
+        res.status(401).json({ message: 'No se proporcionó token' });
+        return;
     }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, "CLAVESECRETA123456@$PEMI") as { id: number };
+    const userId = decoded.id;
+
+    if (!ticketTypeId || !cantidad) {
+        res.status(400).json({ message: 'Faltan datos de la compra' });
+        return;
+    }
+
+    try {
+        // Cambiamos para que devuelva los tickets creados directamente
+        const tickets = await this.ticketService.comprarTicketDirecto(userId, ticketTypeId, cantidad);
+        res.status(200).json({ 
+            message: 'Compra realizada con éxito',
+            tickets: tickets 
+        });
+    } catch (error) {
+        console.error("Error al procesar la compra:", error);
+        res.status(500).json({ 
+            message: 'Error interno al procesar la compra.', 
+            error: (error as Error).message 
+        });
+    }
+}
 }

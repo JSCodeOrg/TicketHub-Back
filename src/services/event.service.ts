@@ -86,34 +86,49 @@ export class EventService {
 
     }
 
-    public async getRandomEvents(): Promise<EventSummaryDTO[]> {
-        try {
-            const events = await this.eventRepository
-                .createQueryBuilder("event")
-                .leftJoinAndSelect("event.responsable", "responsable")
-                .orderBy("RANDOM()")
-                .limit(5)
-                .getMany();
+    
+    public async getRandomEvents(): Promise<EventDTO[]> {
+    try {
+        const events = await this.eventRepository
+            .createQueryBuilder("event")
+            .leftJoinAndSelect("event.responsable", "responsable")
+            .leftJoinAndSelect("event.ticketTypes", "ticketTypes")
+            .orderBy("RANDOM()")
+            .limit(5)
+            .getMany();
 
-            const eventDTOs: EventSummaryDTO[] = events.map(event => ({
-                nombre: event.nombre!,
-                banner: event["banner"] || "https://via.placeholder.com/600x300.png?text=Evento",
-                descripcion: event.descripcion!,
-                fecha: event.fecha!,
-                aforo: event.aforo!,
+        return events.map(event => {
+            if (!event.responsable) {
+                throw new Error("Evento sin responsable asignado");
+            }
+
+            return {
+                nombre: event.nombre || 'Evento sin nombre',
+                banner: event.banner || "",
+                descripcion: event.descripcion || 'Sin descripción',
+                fecha: event.fecha || new Date(),
+                aforo: event.aforo || 0,
+                ubicacion: event.ubicacion || event.responsable.nombre || 'Ubicación no disponible',
                 responsable: {
-                    nombre: event.responsable?.nombre!,
-                    foto: event.responsable?.foto
-                }
-            }));
-
-            return eventDTOs;
-
-        } catch (error) {
-            console.error("Error al obtener eventos aleatorios:", error);
-            throw new Error("Error al obtener eventos aleatorios");
-        }
+                    id: event.responsable.id!, // ← aquí va el "!"
+                    nombre: event.responsable.nombre || 'Responsable sin nombre',
+                    foto: event.responsable.foto
+                },
+                ticketTypes: event.ticketTypes?.map(ticket => ({
+                    id: ticket.id || 0,
+                    nombre: ticket.nombre || 'Ticket sin nombre',
+                    precio: ticket.precio || 0,
+                    cantidad_total: ticket.cantidad_total || 0,
+                    cantidad_disponible: ticket.cantidad_disponible || 0
+                })) || []
+            };
+        });
+    } catch (error) {
+        console.error("Error al obtener eventos aleatorios:", error);
+        throw new Error("Error al obtener eventos aleatorios");
     }
+}
+
 
     public async updateEvent(eventId: number, eventData: EventDTO, userToken: string) {
         const token = userToken.substring(7);

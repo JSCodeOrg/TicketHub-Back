@@ -28,7 +28,8 @@ const userController = new UserController(userService);
 const eventService = new EventService(eventRepository, ticketRepository, ticketTipeRepository, userRepository, userPerRolesRepository, AppDataSource);
 const eventController = new EventController(eventService);
 
-const ticketService = new TicketService(ticketRepository, eventRepository, ticketTipeRepository);
+const ticketService = new TicketService(eventRepository, ticketRepository, ticketTipeRepository);
+
 const ticketController = new TicketController(ticketService);
 
 router.post('/auth/login', (req, res) => userController.login(req, res));
