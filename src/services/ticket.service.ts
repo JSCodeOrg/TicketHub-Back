@@ -160,7 +160,7 @@ export class TicketService {
         return results;
     }
 
-    public async validarYUsarTicket(token: string): Promise<{
+    public async validarYUsarTicket(token: string, eventoId: number): Promise<{
         ticketId: number,
         ticketType: string,
         evento: string,
@@ -171,7 +171,6 @@ export class TicketService {
 
             const ticketId = decoded.ticketId;
 
-            // Traer el ticket con su tipo y evento asociados
             const ticket = await this.ticketRepository.findOne({
                 where: { id: ticketId },
                 relations: ['tipoTicket', 'tipoTicket.evento']
@@ -179,6 +178,10 @@ export class TicketService {
 
             if (!ticket) {
                 throw new Error("Ticket no encontrado");
+            }
+
+            if (ticket.tipoTicket?.evento?.id !== eventoId) {
+                throw new Error("El ticket pertenece a un evento diferente");
             }
 
             if (ticket.estado !== 'ACTIVO') {
@@ -208,7 +211,7 @@ export class TicketService {
             throw new Error("Error desconocido");
         }
     }
-
+    
     public async obtenerInfoTickets(eventoId: number): Promise<
         {
             ticketType: string;

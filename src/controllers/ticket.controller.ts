@@ -99,14 +99,14 @@ export class TicketController {
 
     public async validarYUsarTicket(req: Request, res: Response): Promise<void> {
         try {
-            const { token } = req.body;
+            const { token, eventoId } = req.body;
 
-            if (!token) {
-                res.status(400).json({ message: "Se requiere el token del ticket" });
+            if (!token || !eventoId) {
+                res.status(400).json({ message: "Se requiere el token del ticket y el ID del evento" });
                 return;
             }
 
-            const resultado = await this.ticketService.validarYUsarTicket(token);
+            const resultado = await this.ticketService.validarYUsarTicket(token, eventoId);
             res.status(200).json(resultado);
 
         } catch (error) {
