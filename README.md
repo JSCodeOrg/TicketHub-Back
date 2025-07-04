@@ -13,7 +13,7 @@ El **backend de TicketHub** es el núcleo del sistema de gestión de eventos y e
 ✅ **Gestión de usuarios**
 - Registro e inicio de sesión seguro.
 - Generación y validación de tokens JWT para autenticación.
-- Control de roles (usuario, logístico, administrador).
+- Control de roles (usuario, administrador).
 
 ✅ **Gestión de eventos**
 - Creación de eventos por parte de usuarios autorizados.
