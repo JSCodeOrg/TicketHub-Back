@@ -49,6 +49,11 @@ router.get('/eventos/usuario', (req, res) => eventController.getUserEvents(req, 
 router.get('/tickets/:idEvento', (req, res) => ticketController.getTickets(req, res));
 router.post('/comprar', (req, res) => ticketController.comprarTicket(req, res));
 
+router.get("/tickets/evento/:eventoId", (req, res) => ticketController.getUserTicketsForEvent(req, res));
+router.post('/tickets/validar', (req, res) => ticketController.validarYUsarTicket(req, res));
 
+
+
+router.get("/eventos-con-tickets", (req, res) => ticketController.getUserEventsWithTickets(req, res));
 
 export default router;

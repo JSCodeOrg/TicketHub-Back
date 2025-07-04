@@ -1,4 +1,4 @@
-// Ticket.ts
+
 import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "typeorm";
 import { TicketTypes } from "./Ticket_Types";
 import { User } from "./User";

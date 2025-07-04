@@ -8,6 +8,7 @@ import QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { User } from "../entities/User";
+import { EventDTO } from '../dtos/Event/EventDTO';
 
 export class TicketService {
 
@@ -117,6 +118,156 @@ export class TicketService {
 
     return createdTickets;
 }
+
+
+
+
+    public async getUserTicketsForEventWithFiles(
+        userId: number,
+        eventoId: number
+    ): Promise<{ nombreTipoTicket: string; qrFile: string }[]> {
+
+        const tickets = await this.ticketRepository.query(`
+        SELECT t."qrPath", tt."nombre" AS "nombreTipoTicket"
+        FROM "Tickets" t
+        JOIN "Tipos_tickets" tt ON t."tipo_ticket_id" = tt."id"
+        JOIN "Eventos" e ON tt."evento_id" = e."id"
+        WHERE t."usuario_id" = $1 AND e."id" = $2
+        AND t."estado" = 'ACTIVO'
+    `, [userId, eventoId]);
+
+        const results: { nombreTipoTicket: string; qrFile: string }[] = [];
+
+        for (const t of tickets) {
+            if (!t.qrPath) {
+                continue;
+            }
+
+            try {
+                const stream = await minioClient.getObject('tickets', t.qrPath);
+
+                const buffer = await new Promise<Buffer>((resolve, reject) => {
+                    const chunks: Buffer[] = [];
+                    stream.on('data', (chunk) => chunks.push(chunk));
+                    stream.on('end', () => resolve(Buffer.concat(chunks)));
+                    stream.on('error', (err) => reject(err));
+                });
+
+                const base64Image = `data:image/png;base64,${buffer.toString('base64')}`;
+
+                results.push({
+                    nombreTipoTicket: t.nombreTipoTicket,
+                    qrFile: base64Image
+                });
+
+            } catch (err) {
+                console.error(`Error al recuperar QR para ticket:`, err);
+            }
+        }
+
+        return results;
+    }
+
+
+    public async validarYUsarTicket(token: string): Promise<string> {
+        try {
+            const decoded = jwt.verify(token, "CLAVESECRETA123456@$PEMI") as { ticketId: number };
+
+            const ticketId = decoded.ticketId;
+
+            console.log(ticketId)
+            console.log(ticketId)
+            console.log(ticketId)
+            console.log(ticketId)
+            console.log(ticketId)
+
+            const ticket = await this.ticketRepository.findOne({
+                where: { id: ticketId }
+            });
+
+            if (!ticket) {
+                throw new Error("Ticket no encontrado");
+            }
+
+            if (ticket.estado !== 'ACTIVO') {
+                throw new Error(`El ticket no está activo (estado actual: ${ticket.estado})`);
+            }
+
+            ticket.estado = 'USADO';
+            await this.ticketRepository.save(ticket);
+
+            return `El ticket ${ticketId} ha sido validado y marcado como USADO`;
+        } catch (err) {
+            if (err instanceof jwt.TokenExpiredError) {
+                throw new Error("El token del ticket ha expirado");
+            }
+            if (err instanceof jwt.JsonWebTokenError) {
+                throw new Error("El token del ticket no es válido");
+            }
+            if (err instanceof Error) {
+                throw new Error(err.message);
+            }
+            throw new Error("Error desconocido");
+        }
+    }
+
+
+
+
+
+
+
+    
+
+ 
+
+
+
+
+
+  
+
+    public async getUserEventsWithTickets(userId: number): Promise<{
+    id: number;
+    nombre: string;
+    descripcion: string;
+    fecha: Date;
+    banner: string | null;
+    categoria: string | null;
+    cantidadTickets: number;
+    tiposTickets: string[];
+}[]> {
+    const eventos: any[] = await this.ticketRepository.query(`
+        SELECT DISTINCT 
+            e."id",
+            e."nombre",
+            e."descripcion", 
+            e."fecha",
+            e."banner",
+            e."categoria",
+            COUNT(t."id") as "cantidadTickets",
+            ARRAY_AGG(DISTINCT tt."nombre") as "tiposTickets"
+        FROM "Eventos" e
+        JOIN "Tipos_tickets" tt ON e."id" = tt."evento_id"
+        JOIN "Tickets" t ON tt."id" = t."tipo_ticket_id"
+        WHERE t."usuario_id" = $1 AND t."estado" = 'ACTIVO'
+        GROUP BY e."id", e."nombre", e."descripcion", e."fecha", e."banner", e."categoria"
+        ORDER BY e."fecha" DESC
+    `, [userId]);
+
+    return eventos.map((evento: any) => ({
+        id: evento.id,
+        nombre: evento.nombre,
+        descripcion: evento.descripcion,
+        fecha: new Date(evento.fecha),
+        banner: evento.banner,
+        categoria: evento.categoria,
+        cantidadTickets: parseInt(evento.cantidadTickets),
+        tiposTickets: evento.tiposTickets
+    }));
+}
+
+
 }
 
 
