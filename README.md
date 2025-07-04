@@ -39,6 +39,7 @@ El **backend de TicketHub** es el núcleo del sistema de gestión de eventos y e
 | **TypeScript**        | Tipado fuerte para mayor robustez          |
 | **TypeORM**           | ORM para base de datos relacional          |
 | **JWT (jsonwebtoken)**| Generación y validación de tokens          |
+| **Minio (Docker)**| Almacenamiento interno de QRs        |
 | **DTOs** | Validación de datos entrantes         |
 | **MVC**               | Separación clara de responsabilidades      |
 
@@ -56,7 +57,9 @@ El **backend de TicketHub** es el núcleo del sistema de gestión de eventos y e
 - El usuario compra una entrada.
 - El backend registra el ticket en la base de datos.
 - El backend genera un token único para el ticket (firmado digitalmente).
+- El backend almacena el QR de la entrada del usuario en su bucket EC2 (Minio).
 - El backend responde con el QR/token para la app.
+  
 
 **Escaneo y validación**
 - El QR Scanner envía el token y el ID del evento al backend.
