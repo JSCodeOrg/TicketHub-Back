@@ -39,7 +39,7 @@ El **backend de TicketHub** es el núcleo del sistema de gestión de eventos y e
 | **TypeScript**        | Tipado fuerte para mayor robustez          |
 | **TypeORM**           | ORM para base de datos relacional          |
 | **JWT (jsonwebtoken)**| Generación y validación de tokens          |
-| **DTOs + class-validator** | Validación de datos entrantes         |
+| **DTOs** | Validación de datos entrantes         |
 | **MVC**               | Separación clara de responsabilidades      |
 
 ---
